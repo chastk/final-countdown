@@ -5,6 +5,7 @@
 
 #define BUFFER_MAX 1024
 #define PROCS_MAX 26
+#define MEM_SIZE 1600
 
 // p_name is the letter for that procedure
 // mem_size is the # of blocks it takes up
@@ -22,8 +23,103 @@ typedef struct procedure{
 	int in_or_out; // should always be set to 0 initially
 }proc;
 
-int numProcs;
+typedef struct free_block{
+	int start_index;
+	int size;
+}fb;
 
+int numProcs;
+int time_counter = 0;
+// block counter
+int bc = 0;
+
+// Utility function for qsort-ing free_blocks
+int index_sort(const void *a,const void *b) {
+	struct free_block * x = (struct free_block*)a;
+	struct free_block * y = (struct free_block*)b;
+	int diff = x->start_index - y->start_index;
+	return diff;
+}
+
+// Utility function for initializing free_blocks
+//    To start with, there is ONE free block
+void init(struct free_block * list){
+	list = (struct free_block)(malloc(sizeof(struct free_block)));
+	list->start_index = 0;
+	list->size = MEM_SIZE;
+	bc = 1;
+}
+
+// Utility function for adding a free_block
+struct free_block * add(struct free_block * list, int index, int size){
+	// create new free block
+	struct free_block temp = (struct free_block)(malloc(sizeof(struct free_block)));
+	temp.start_index = index;
+	temp.size = size;
+	// reallocate memory in the list, and add the new block
+	bc++;
+	list = realloc(list, (bc * sizeof(struct free_block)) );
+	list[bc] = temp;
+	// re-sort everything before we return the list
+	qsort(list, bc, sizeof(struct free_block), &index_sort);
+	// cleanup~
+	free((void *)temp);
+	return list;
+}
+
+// Utility function for merging free blocks
+// We want the listof free blocks to be sorted at all times.
+// If there are two consecutive blocks a and b where
+// 	(a.size) - (a.start_index) == (b.start_index),
+// then we want to merge these two blocks.
+// This function *should* make ALL such reductions.
+// This function assumes list is sorted.
+struct free_block * merge_blocks(struct free_block * list){
+	// If there are no free blocks, something is probably wrong
+	if(bc == 0){
+		perror("No free blocks?? Check to be sure the list is initialized\n");
+		exit(1);
+	}
+	// If there's only one free block, no need to do anything
+	if(bc == 1) return list;
+
+	// Otherwise, loop through everything:
+	else{ 
+		int i = 0; // current block
+		int j = 1; // next block to check for merging
+		int k;
+		int temp = bc;
+		struct free_block a = list[i];
+		struct free_block b = list[j];
+		while(j < temp){
+			// check for merge condition
+			if( ((a.size)-(a.start_index) == (b.start_index)) ){
+				// merge blocks list[i] and list[j]
+				list[i].size += list[j].size;
+				// remove list[j] by shifting everything down
+				for(k = j; k < temp; k++){
+					list[k] = list[j+1];
+				}
+				// decrement temp (which will become the new block counter)
+				temp--;
+				// check to see if the new block i can merge with
+				// the next block in the next loop iteration
+				j++;
+			}// /if
+			// if current block i doesn't need to be merged, increment it to the next block
+			// and also increment j, to check for the next possible merge
+			else{
+				i++;
+				j++;
+			}
+		}// /while
+	}// /else
+	return list;
+}// /merge_blocks
+
+
+// Utility function for reading in the input file and parsing it
+// 	into process structures for the rest of the program.
 struct procedure * read_from_file(FILE * input){
 	char buffer[BUFFER_MAX];
 	fgets(buffer, BUFFER_MAX, input);
