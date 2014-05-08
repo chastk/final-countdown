@@ -381,6 +381,22 @@ int main (int argc, char* argv[]) {
         if ((argc==3 && strcmp(argv[2], "first")) || (argc==4 && strcmp(argv[3], "first"))) {
 			First(time);
 		}
+        else if ((argc==3 && strcmp(argv[2], "best")) || (argc==4 && strcmp(argv[3], "best"))) {
+            Best(time);
+        }
+        else if ((argc==3 && strcmp(argv[2], "next")) || (argc==4 && strcmp(argv[3], "next"))) {
+            Next(time);
+        }
+        else if ((argc==3 && strcmp(argv[2], "worst")) || (argc==4 && strcmp(argv[3], "worst"))) {
+            Worst(time);
+        }
+        else if ((argc==3 && strcmp(argv[2], "noncontig")) || (argc==4 && strcmp(argv[3], "noncontig"))) {
+            noncontiguous(time);
+        }
+        else {
+            printf("ERROR WRONG ARGUMENTS");
+            return EXIT_FAILURE;
+        }
         return EXIT_SUCCESS;
     }
     else {
