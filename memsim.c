@@ -301,7 +301,7 @@ void First(int time) {
     j=0;
     for (j=0; j<numProcs; j++) {
         int k=-1;
-        while (list[i].size>0) {
+        while (i < bc) {
             if (list[i].size>=procs[j].mem_size && procs[j].start_index==-1 && procs[j].times[procs[j].time_index]<=time) {
                 k=1;
                 put_process(j,i);
