@@ -23,6 +23,10 @@ typedef struct procedure{
 	int in_or_out; // should always be set to 0 initially
 }proc;
 
+// start_index is the index in memory of the FIRST space
+//    the free block takes up
+// size is the TOTAL spaces the block takes up
+// (the last space occupied by the block is start_index+size)
 typedef struct free_block{
 	int start_index;
 	int size;
@@ -34,6 +38,7 @@ int time_counter = 0;
 int bc = 0;
 
 // Utility function for qsort-ing free_blocks
+//	by start_index
 int index_sort(const void *a,const void *b) {
 	struct free_block * x = (struct free_block*)a;
 	struct free_block * y = (struct free_block*)b;
@@ -42,18 +47,21 @@ int index_sort(const void *a,const void *b) {
 }
 
 // Utility function for initializing free_blocks
-//    To start with, there is ONE free block
-void init(struct free_block * list){
-	list = (struct free_block)(malloc(sizeof(struct free_block)));
-	list->start_index = 0;
-	list->size = MEM_SIZE;
+// To start with, there is ONE free block
+void init(){
+	list = (struct free_block*)(malloc(sizeof(struct free_block)));
+	list->start_index = OS_SIZE;
+	list->size = (MEM_SIZE - OS_SIZE);
 	bc = 1;
 }
 
 // Utility function for adding a free_block
-struct free_block * add(struct free_block * list, int index, int size){
+// In other words, this happens when a process LEAVES memory
+// index = the start index of the new block
+// size = the size of the new block
+void add(int index, int size){
 	// create new free block
-	struct free_block temp = (struct free_block)(malloc(sizeof(struct free_block)));
+	struct free_block temp = (struct free_block*)(malloc(sizeof(struct free_block)));
 	temp.start_index = index;
 	temp.size = size;
 	// reallocate memory in the list, and add the new block
@@ -63,28 +71,27 @@ struct free_block * add(struct free_block * list, int index, int size){
 	// re-sort everything before we return the list
 	qsort(list, bc, sizeof(struct free_block), &index_sort);
 	// cleanup~
-	free((void *)temp);
-	return list;
+	free(temp);
 }
 
 // Utility function for merging free blocks
 // We want the listof free blocks to be sorted at all times.
 // If there are two consecutive blocks a and b where
-// 	(a.size) - (a.start_index) == (b.start_index),
+// (a.size) - (a.start_index) == (b.start_index),
 // then we want to merge these two blocks.
 // This function *should* make ALL such reductions.
 // This function assumes list is sorted.
-struct free_block * merge_blocks(struct free_block * list){
+void * merge_blocks(){
 	// If there are no free blocks, something is probably wrong
 	if(bc == 0){
 		perror("No free blocks?? Check to be sure the list is initialized\n");
 		exit(1);
 	}
-	// If there's only one free block, no need to do anything
+// If there's only one free block, no need to do anything
 	if(bc == 1) return list;
 
 	// Otherwise, loop through everything:
-	else{ 
+	else{
 		int i = 0; // current block
 		int j = 1; // next block to check for merging
 		int k;
@@ -98,7 +105,7 @@ struct free_block * merge_blocks(struct free_block * list){
 				list[i].size += list[j].size;
 				// remove list[j] by shifting everything down
 				for(k = j; k < temp; k++){
-					list[k] = list[j+1];
+					list[k] = list[k+1];
 				}
 				// decrement temp (which will become the new block counter)
 				temp--;
@@ -113,9 +120,46 @@ struct free_block * merge_blocks(struct free_block * list){
 				j++;
 			}
 		}// /while
+		// reallocate the memory in the list array, and update the block counter
+		bc = temp;
+		list = realloc(list, (bc * sizeof(struct free_block)) );
 	}// /else
-	return list;
 }// /merge_blocks
+
+
+// Utility function for updating/removing a free block
+// In other words, this happens when a process ENTERS memory
+// proc_index is the index of the process to add
+// block_index is the block we want to put it into
+// We would like to assume that this method is NOT called unless
+// 	we already know that procs[pindex] fits into list[bindex]
+void put_process(int pindex, int bindex){
+	int diff = (list[bindex].size - procs[pindex].mem_size);
+	// Check to be sure the process fits!
+	if( diff < 0 ){
+		perror("Error placing process: block %d is too small for process %d!", bindex, pindex);
+		exit(-1);
+	}
+	// If the process is the same size as the block,
+	// 	eliminate block list[bindex] and shift the rest of list
+	else if( diff == 0 ){
+		int k;
+		for(k = bindex; k < bc; k++){
+			list[k] = list[k+1];
+		}
+		bc--;
+		list = realloc(list, (bc * sizeof(struct free_block)) );
+	}
+	// If the process is smaller than the block, just update the block's stats
+	//	eg, ADD to start_index, SUBTRACT from size
+	else {
+		list[bindex].start_index += diff;
+		list[bindex].size -= size;
+	}
+}// /put_process
+
+
+
 
 
 // Utility function for reading in the input file and parsing it
