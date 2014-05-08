@@ -466,17 +466,42 @@ int main (int argc, char* argv[]) {
 
 	printmemory(0);
 	// Do the thing:
-	if(strcmp(method, "first") ){
-		
+	int t_input;
+	if(strcasecmp(method, "first") ){
+		while(1){
+			printf("Enter next time, or 0 to quit:\n");
+			if( scanf("%d", &t_input) == 0 )
+				break;
+			First(t_input);
+			printmemory(t_input);
+		}
 	}
 	else if(strcasecmp(method, "next") ){
-		
+		while(1){
+			printf("Enter next time, or 0 to quit:\n");
+			if( scanf("%d", &t_input) == 0 )
+				break;
+			Next(t_input);
+			printmemory(t_input);
+		}
 	}
 	else if(strcasecmp(method, "best") ){
-		
+		while(1){
+			printf("Enter next time, or 0 to quit:\n");
+			if( scanf("%d", &t_input) == 0 )
+				break;
+			Best(t_input);
+			printmemory(t_input);
+		}
 	}
 	else if(strcasecmp(method, "worst") ){
-		
+		while(1){
+			printf("Enter next time, or 0 to quit:\n");
+			if( scanf("%d", &t_input) == 0 )
+				break;
+			Worst(t_input);
+			printmemory(t_input);
+		}
 	}
 	else{
 		perror("Error: Invalid method! Options: first, next, best, worst\n");
