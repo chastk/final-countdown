@@ -470,7 +470,8 @@ int main (int argc, char* argv[]) {
 	if(strcasecmp(method, "first") ){
 		while(1){
 			printf("Enter next time, or 0 to quit:\n");
-			if( scanf("%d", &t_input) == 0 )
+			scanf("%d", &t_input);
+			if( t_input == 0 )
 				break;
 			First(t_input);
 			printmemory(t_input);
@@ -479,7 +480,8 @@ int main (int argc, char* argv[]) {
 	else if(strcasecmp(method, "next") ){
 		while(1){
 			printf("Enter next time, or 0 to quit:\n");
-			if( scanf("%d", &t_input) == 0 )
+			scanf("%d", &t_input);
+			if( t_input == 0 )
 				break;
 			Next(t_input);
 			printmemory(t_input);
@@ -488,7 +490,8 @@ int main (int argc, char* argv[]) {
 	else if(strcasecmp(method, "best") ){
 		while(1){
 			printf("Enter next time, or 0 to quit:\n");
-			if( scanf("%d", &t_input) == 0 )
+			scanf("%d", &t_input);
+			if( t_input == 0 )
 				break;
 			Best(t_input);
 			printmemory(t_input);
@@ -497,7 +500,8 @@ int main (int argc, char* argv[]) {
 	else if(strcasecmp(method, "worst") ){
 		while(1){
 			printf("Enter next time, or 0 to quit:\n");
-			if( scanf("%d", &t_input) == 0 )
+			scanf("%d", &t_input);
+			if( t_input == 0 )
 				break;
 			Worst(t_input);
 			printmemory(t_input);
