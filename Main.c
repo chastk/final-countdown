@@ -11,6 +11,7 @@
 #define BUFFER_MAX 1024
 #define PROCS_MAX 26
 #define MEM_SIZE 1600
+#define OS_SIZE 80
 
 struct procedure {
 	char p_name;
@@ -25,12 +26,13 @@ typedef struct free_block{
 	int size;
 }fb;
 
-char memory [1600];
+char memory [MEM_SIZE];
 int numProcs;
 // block counter
 int bc = 0;
 
 // Utility function for qsort-ing free_blocks
+//	by start_index
 int index_sort(const void *a,const void *b) {
 	struct free_block * x = (struct free_block*)a;
 	struct free_block * y = (struct free_block*)b;
@@ -41,7 +43,7 @@ int index_sort(const void *a,const void *b) {
 // Utility function for initializing free_blocks
 // To start with, there is ONE free block
 void init(struct free_block * list){
-	list = (struct free_block)(malloc(sizeof(struct free_block)));
+	list = (struct free_block*)(malloc(sizeof(struct free_block)));
 	list->start_index = 0;
 	list->size = MEM_SIZE;
 	bc = 1;
@@ -50,7 +52,7 @@ void init(struct free_block * list){
 // Utility function for adding a free_block
 struct free_block * add(struct free_block * list, int index, int size){
 	// create new free block
-	struct free_block temp = (struct free_block)(malloc(sizeof(struct free_block)));
+	struct free_block temp = (struct free_block*)(malloc(sizeof(struct free_block)));
 	temp.start_index = index;
 	temp.size = size;
 	// reallocate memory in the list, and add the new block
@@ -60,7 +62,7 @@ struct free_block * add(struct free_block * list, int index, int size){
 	// re-sort everything before we return the list
 	qsort(list, bc, sizeof(struct free_block), &index_sort);
 	// cleanup~
-	free((void *)temp);
+	free(temp);
 	return list;
 }
 
@@ -255,10 +257,10 @@ struct free_block * First(int time, struct procedure * proc, struct free_block *
 int main (int argc, char* argv[]) {
     if (argc==3 || argc==4) {
         int i;
-        for (i=0; i<80; i++) {
+        for (i=0; i<OS_SIZE; i++) {
             memory[i]='#';
         }
-        for (i=80; i<1600; i++) {
+        for (i=OS_SIZE; i<MEM_SIZE; i++) {
             memory[i]='.';
         }
 		if (argc==3) {
@@ -271,7 +273,7 @@ int main (int argc, char* argv[]) {
 			struct procedure * proc;
 			proc = read_from_file(input);
 			struct free_block * blocks;
-			blocks = init(blocks);
+			init(blocks);
 			int i;
 			for (i = 0; i < numProcs; i++){
 				printf("%c:: %d blocks\n", proc[i].p_name, proc[i].mem_size);
