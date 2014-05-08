@@ -458,8 +458,9 @@ int main (int argc, char* argv[]) {
 	//	printf("%c:: %d blocks\n", procs[i].p_name, procs[i].mem_size);
 	//}
 	// Get method:
-	char * method;
-	if( !(strcpy(method, argv[2])) ){
+	char * method = "first";
+	strcpy(method, argv[2]);
+	if( method == NULL ){
 		perror("Error: No method supplied!\n");
 		return EXIT_FAILURE;
 	}
