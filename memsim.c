@@ -205,7 +205,6 @@ struct procedure * read_from_file(FILE * input){
 	while( fgets(buffer, BUFFER_MAX, input) ){
 		len = strlen(buffer);
 		if( buffer[len-1] == '\n' ) buffer[len-1] = '\0';
-		printf("[init]: read: %s\n", buffer);
 		strcpy(toProcess, buffer);
 
 		// set process name
@@ -217,15 +216,13 @@ struct procedure * read_from_file(FILE * input){
 		int temp;
  		token = strtok(NULL, " \t");
 		procs[index].mem_size = atoi(token);
-		printf("[init]: Proc: %c, Size: %d\n", procs[index].p_name, procs[index].mem_size);
-
+		
 		// read all the times for that process
 		token = strtok(NULL, " \t");
 		while ( token != NULL) {
 			temp = atoi(token);
 			array = realloc(array, (tindex+1)*sizeof(int));
 			array[tindex] = temp;
-			printf("[init]: added time: %d\n", array[tindex]);
 			tindex++;
 			token = strtok(NULL, " \t");
 		}// /while
@@ -452,19 +449,21 @@ int main (int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	procs = read_from_file(input);
+	printf("Processes initialized\n");
 	// Initialize free block(s)
 	init(); 
-	//for (i = 0; i < numProcs; i++){
-	//	printf("%c:: %d blocks\n", procs[i].p_name, procs[i].mem_size);
-	//}
+	printf("Free blocks initalized\n");
+
 	// Get method:
-	char * method = "first";
+	char method[8];
 	strcpy(method, argv[2]);
+	int len = strlen(method);
+	method[len] = '\0';
 	if( method == NULL ){
 		perror("Error: No method supplied!\n");
 		return EXIT_FAILURE;
 	}
-
+	printf("Method acquired\n");
 	printmemory(0);
 	// Do the thing:
 	int t_input;
