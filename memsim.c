@@ -178,7 +178,7 @@ void merge_blocks(){
 // we already know that procs[pindex] fits into list[bindex]
 void put_process(int pindex, int bindex){
 	int diff = (list[bindex].size - procs[pindex].mem_size);
-	printf(":: Block size: %d\n:: Procedure size: %d\n", list[bindex].size, procs[pindex].mem_size);
+	//printf(":: Block size: %d\n:: Procedure size: %d\n", list[bindex].size, procs[pindex].mem_size);
 	// Check to be sure the process fits!
 	if( diff < 0 ){
 		printf("Error placing process: block %d is too small for process %d!\n", bindex, pindex);
@@ -309,7 +309,7 @@ void init_memory(){
 			// find the FIRST block large enough to hold procs[next]
 			k = -1;
 			for(j = 0; j < bc; j++){
-				printf(":: attmept placement at %d: (%d)\n", j, list[j].size);
+				//printf(":: attmept placement at %d: (%d)\n", j, list[j].size);
 				if( list[j].size >= procs[next].mem_size ){
 					k = j;
 					break;
@@ -320,8 +320,12 @@ void init_memory(){
 			if(k != -1){
 				procs[next].start_index = list[k].start_index;
 				put_process(next,k);
-				printf(":: size after placement: %d\n", list[k].size);
-				printf("Placed a process at %d\n", procs[next].start_index);
+				//printf(":: size after placement: %d\n", list[k].size);
+				//printf("Placed a process at %d\n", procs[next].start_index);
+			}
+			else{
+				printf("[Initilization Error:] Memory overflow at time 0!\n");
+				exit(-1);
 			}
 		next = get_initial_events();
 	}// /while
@@ -383,7 +387,7 @@ int get_next_event(int time){
 	for(i = 0; i < numProcs; i++){
 		index = procs[i].time_index;
 		event = procs[i].times[index];
-		printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
+		//printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
 		if( event != 0 && event <= time ) return i;
 	}
 	return -1;
@@ -395,7 +399,7 @@ int get_initial_events(){
 	for(i = 0; i < numProcs; i++){
 		index = procs[i].time_index;
 		event = procs[i].times[index];
-		printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
+		//printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
 		if( event == 0 ) return i;
 	}
 	return -1;
@@ -585,7 +589,7 @@ int main (int argc, char* argv[]) {
         printf("USAGE: ./a.out <input.txt> <method>\n");
         return EXIT_FAILURE;
     }
-    int i, n, j;
+    //int i, n, j;
 	// Initlaize processes
 	char * filename = argv[1];
 	FILE * input = fopen(filename, "r");
