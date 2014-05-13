@@ -89,19 +89,19 @@ int index_sort(const void *a,const void *b){
 // Utility function for initializing free_blocks
 // To start with, there is ONE free block
 void init_free_blocks(){
-	list = (struct free_block*)(malloc(sizeof(struct free_block)));
-	list->start_index = OS_SIZE;
-	list->size = (MEM_SIZE - OS_SIZE);
-	bc = 1;
+    list = (struct free_block*)(malloc(sizeof(struct free_block)));
+    list->start_index = OS_SIZE;
+    list->size = (MEM_SIZE - OS_SIZE);
+    bc = 1;
 }
 
 // Utility function for resetting free_blocks after defrag
 // Basically init, with arguments for the start and size following defrag
 void reset_free_blocks(int start, int b_size){
-	list = (struct free_block*)(malloc(sizeof(struct free_block)));
-	list->start_index = start;
-	list->size = b_size;
-	bc = 1;
+    list = (struct free_block*)(malloc(sizeof(struct free_block)));
+    list->start_index = start;
+    list->size = b_size;
+    bc = 1;
 }
 
 // Utility function for adding a free_block
@@ -109,7 +109,7 @@ void reset_free_blocks(int start, int b_size){
 // index = the start index of the new block
 // size = the size of the new block
 void take_process(int pindex){
-	printf("Taking process %d from memory....\n", pindex);
+    printf("Taking process %d from memory....\n", pindex);
     // create new free block
     struct free_block * temp = malloc(sizeof(struct free_block));
     temp->start_index = procs[pindex].start_index;
@@ -118,9 +118,9 @@ void take_process(int pindex){
     bc++;
     list = realloc(list, (bc * sizeof(struct free_block)) );
     list[bc-1] = *temp;
-	// update fields in the procedure
-	procs[pindex].time_index++;
-	procs[pindex].start_index = -1;
+    // update fields in the procedure
+    procs[pindex].time_index++;
+    procs[pindex].start_index = -1;
     // re-sort everything and merge if necessary
     write_free(&list[bc-1]);
     qsort(list, bc, sizeof(struct free_block), &index_sort);
@@ -187,160 +187,162 @@ void merge_blocks(){
 // We would like to assume that this method is NOT called unless
 // we already know that procs[pindex] fits into list[bindex]
 void put_process(int pindex, int bindex){
-	int diff = (list[bindex].size - procs[pindex].mem_size);
-	//printf(":: Block size: %d\n:: Procedure size: %d\n", list[bindex].size, procs[pindex].mem_size);
-	// Check to be sure the process fits!
-	if( diff < 0 ){
-		printf("Error placing process: block %d is too small for process %d!\n", bindex, pindex);
-		exit(-1);
-	}
-	// If the process is the same size as the block,
-	// 	eliminate block list[bindex] and shift the rest of list
-	else if( diff == 0 ){
-		int k;
-		procs[pindex].start_index = list[bindex].start_index;
-		procs[pindex].time_index++;
-		write_procedure(&procs[pindex]);
-		for(k = bindex; k < bc; k++){
-			list[k] = list[k+1];
-		}
-		bc--;
-		list = realloc(list, (bc * sizeof(struct free_block)) );
-	}
-	// If the process is smaller than the block, just update the block's stats
-	//	eg, ADD to start_index, SUBTRACT from size
-	else {
-		list[bindex].start_index += procs[pindex].mem_size;
-		list[bindex].size -= procs[pindex].mem_size;
-		//printf("updated block %d: start: %d, size: %d\n", bindex, list[bindex].start_index, list[bindex].size);
-		procs[pindex].start_index = list[bindex].start_index;
-		procs[pindex].time_index++;
-		write_procedure(&procs[pindex]);
-	}
+    int diff = (list[bindex].size - procs[pindex].mem_size);
+    //printf(":: Block size: %d\n:: Procedure size: %d\n", list[bindex].size, procs[pindex].mem_size);
+    // Check to be sure the process fits!
+    if( diff < 0 ){
+        printf("Error placing process: block %d is too small for process %d!\n", bindex, pindex);
+        exit(-1);
+    }
+    // If the process is the same size as the block,
+    // eliminate block list[bindex] and shift the rest of list
+    else if( diff == 0 ){
+        int k;
+        procs[pindex].start_index = list[bindex].start_index;
+        procs[pindex].time_index++;
+        write_procedure(&procs[pindex]);
+        for(k = bindex; k < bc; k++){
+            list[k] = list[k+1];
+        }
+        bc--;
+        list = realloc(list, (bc * sizeof(struct free_block)) );
+    }
+    // If the process is smaller than the block, just update the block's stats
+    // eg, ADD to start_index, SUBTRACT from size
+    else {
+        list[bindex].start_index += procs[pindex].mem_size;
+        list[bindex].size -= procs[pindex].mem_size;
+        //printf("updated block %d: start: %d, size: %d\n", bindex, list[bindex].start_index, list[bindex].size);
+        procs[pindex].start_index = list[bindex].start_index;
+        procs[pindex].time_index++;
+        write_procedure(&procs[pindex]);
+    }
 }// /put_process
 
 // Utility function for reading in the input file and parsing it
 // into process structures for the rest of the program.
 struct procedure * read_from_file(FILE * input){
-	char buffer[BUFFER_MAX];
-	fgets(buffer, BUFFER_MAX, input);
-	numProcs = atoi(buffer);
-	int len = strlen(buffer);
-	if( buffer[len-1] == '\n' ) buffer[len-1] = '\0';
-	printf("[init]: %d processes in this input\n", numProcs);
-	if(numProcs > PROCS_MAX) printf("[init]: WARNING: too many processes!\n");
+    char buffer[BUFFER_MAX];
+    fgets(buffer, BUFFER_MAX, input);
+    numProcs = atoi(buffer);
+    int len = strlen(buffer);
+    if( buffer[len-1] == '\n' ) buffer[len-1] = '\0';
+        printf("[init]: %d processes in this input\n", numProcs);
+    if(numProcs > PROCS_MAX) printf("[init]: WARNING: too many processes!\n");
 
-	struct procedure * procs = calloc(numProcs, sizeof(struct procedure));
-	char toProcess[BUFFER_MAX];
-	int index, tindex;
-	index = 0;
-	tindex = 0;
-	while( fgets(buffer, BUFFER_MAX, input) ){
-		len = strlen(buffer);
-		if( buffer[len-1] == '\n' ) buffer[len-1] = '\0';
-		strcpy(toProcess, buffer);
+    struct procedure * procs = calloc(numProcs, sizeof(struct procedure));
+    char toProcess[BUFFER_MAX];
+    int index, tindex;
+    index = 0;
+    tindex = 0;
+    while( fgets(buffer, BUFFER_MAX, input) ){
+        len = strlen(buffer);
+        if( buffer[len-1] == '\n' ) buffer[len-1] = '\0';
+        strcpy(toProcess, buffer);
 
-		// set process name
-		procs[index].p_name = (strtok(toProcess, " \t"))[0];
+        // set process name
+        procs[index].p_name = (strtok(toProcess, " \t"))[0];
 
-		// set process memory size
-		int * array = malloc(sizeof(int));
-		char * token;
-		int temp;
- 		token = strtok(NULL, " \t");
-		procs[index].mem_size = atoi(token);
-		
-		// read all the times for that process
-		token = strtok(NULL, " \t");
-		tindex = 0;
-		while ( token != NULL) {
-			temp = atoi(token);
-			array = realloc(array, (tindex+1)*sizeof(int));
-			array[tindex] = temp;
-			tindex++;
-			token = strtok(NULL, " \t");
-		}// /while
-		procs[index].times = array;
-		// With everything from the file set, set the time_index to 0,
-		//	and the start_index to -1 to show that it is out of memory 
-		// 	and nothing has actually happened yet.
-		procs[index].time_index = 0;
-		procs[index].start_index = -1;
-		// this process is initialized!
-		// increment the index counter for the overall array,
-		//    and get the next item in the loop
-		index++;
-	}// /while reading lines
-	return procs;
+        // set process memory size
+        int * array = malloc(sizeof(int));
+        char * token;
+        int temp;
+        token = strtok(NULL, " \t");
+        procs[index].mem_size = atoi(token);
+
+        // read all the times for that process
+        token = strtok(NULL, " \t");
+        tindex = 0;
+        while ( token != NULL) {
+            temp = atoi(token);
+            array = realloc(array, (tindex+1)*sizeof(int));
+            array[tindex] = temp;
+            tindex++;
+            token = strtok(NULL, " \t");
+        }// /while
+        procs[index].times = array;
+        // With everything from the file set, set the time_index to 0,
+        // and the start_index to -1 to show that it is out of memory
+        // and nothing has actually happened yet.
+        procs[index].time_index = 0;
+        procs[index].start_index = -1;
+        // this process is initialized!
+        // increment the index counter for the overall array,
+        // and get the next item in the loop
+        index++;
+    }// /while reading lines
+    return procs;
 }// /read_from_file
 
 // Utility function for updating the memory array
-//	with a process
+// with a process
 void write_procedure(struct procedure * p){
-	int i;
-	if(p->start_index < 0){
-		perror("Cannot write OUT process\n");
-	}
-	int span = (p->start_index + p->mem_size);
-	for(i = p->start_index; i < span; i++){
-		if(memory[i] != '.'){
-			//perror("Invalid memory write location!\n");
-		}
-		memory[i] = p->p_name;
-	}
+    int i;
+    if(p->start_index < 0){
+        perror("Cannot write OUT process\n");
+    }
+    int span = (p->start_index + p->mem_size);
+    if (span>MEM_SIZE) {
+        printf("ERROR:out of memory to intialize \n");
+        exit(EXIT_FAILURE);
+    }
+    for(i = p->start_index; i < span; i++){
+        if(memory[i] != '.'){
+            //perror("Invalid memory write location!\n");
+        }
+        memory[i] = p->p_name;
+    }
 }
 
 // Utility function for updating the memory array
-//	with a free block
+// with a free block
 void write_free(struct free_block * b){
-	printf("writing a free block: start %d, size %d\n", b->start_index, b-> size);
-	int i;
-	int span = (b->start_index + b->size);
-	for(i = b->start_index; i < span; i++){
-		memory[i] = '.';
-	}
+    printf("writing a free block: start %d, size %d\n", b->start_index, b-> size);
+    int i;
+    int span = (b->start_index + b->size);
+    for(i = b->start_index; i < span; i++){
+        memory[i] = '.';
+    }
 }
 
 // Utility function for initializing the memory representation
 void init_memory(){
-	int j;
-	// Opearting system first:
-	for (j = 0; j < OS_SIZE; j++) {
-		memory[j]='#';
-	}
-	// Then the rest of the memory:
-	for (j = OS_SIZE; j < MEM_SIZE; j++) {
-		memory[j]='.';
-	}
-	// Place any processes at time_counter = 0 by first-best placement
-	int next = get_initial_events();
-	int k;
-	// while there's an event to update,
-	while(next != -1){
-		//printf("Next process: %c\n", procs[next].p_name);
-			// find the FIRST block large enough to hold procs[next]
-			k = -1;
-			for(j = 0; j < bc; j++){
-				//printf(":: attmept placement at %d: (%d)\n", j, list[j].size);
-				if( list[j].size >= procs[next].mem_size ){
-					k = j;
-					break;
-				}
-			}
-			// if we found an apprpriate block,
-			// PUT PROCESS
-			if(k != -1){
-				put_process(next,k);
-				//printf(":: size after placement: %d\n", list[k].size);
-				//printf("Placed a process at %d\n", procs[next].start_index);
-			}
-			else{
-				printf("[Initilization Error:] Memory overflow at time 0!\n");
-				exit(-1);
-			}
-		next = get_initial_events();
-	}// /while
-	printf("Memory Initalized\n");
+    int j;
+    // Opearting system first:
+    for (j = 0; j < OS_SIZE; j++) {
+        memory[j]='#';
+    }
+    // Then the rest of the memory:
+    for (j = OS_SIZE; j < MEM_SIZE; j++) {
+        memory[j]='.';
+    }
+    // Place any processes at time_counter = 0 by first-best placement
+    int next = get_initial_events();
+    int k;
+    // while there's an event to update,
+    while(next != -1){
+        //printf("Next process: %c\n", procs[next].p_name);
+        // find the FIRST block large enough to hold procs[next]
+        k = -1;
+        for(j = 0; j < bc; j++){
+            //printf(":: attmept placement at %d: (%d)\n", j, list[j].size);
+            if( list[j].size >= procs[next].mem_size ){
+                k = j;
+                break;
+            }
+        }
+        // if we found an apprpriate block,
+        // PUT PROCESS
+        if(k != -1){
+            put_process(next,k);
+        }
+        else{
+            printf("[Initilization Error:] Memory overflow at time 0!\n");
+            exit(-1);
+        }
+        next = get_initial_events();
+    }// /while
+    printf("Memory Initalized\n");
 }
 
 
@@ -379,11 +381,11 @@ int defrag() {
             }
             if (mark==0) {
                 free(list);
-				reset_free_blocks(i, (1600-i));
+                reset_free_blocks(i, (1600-i));
                 printf("Defragmentation complete. \nRelocated %i processes to create a free memory block of %i units (%f%% of total memory).\n",count, 1600-i, (float)(1600-i)/16.0);
-				for(i = 0; i < bc; i++){
-					printf("[Block %d] start: %d, size: %d\n", i, list[i].start_index, list[i].size);
-				}
+                for(i = 0; i < bc; i++){
+                    printf("[Block %d] start: %d, size: %d\n", i, list[i].start_index, list[i].size);
+                }
                 return 1600-i;
             }
         }
@@ -392,30 +394,30 @@ int defrag() {
 }
 
 // utility method to get the index of the next procedure
-// 	that has an event (entering OR leaving).
+// that has an event (entering OR leaving).
 // As this only gets one at a time, it will get the first event
-//	by the order provided in the original input text.
+// by the order provided in the original input text.
 int get_next_event(int time){
-	int i, event, index;
-	for(i = 0; i < numProcs; i++){
-		index = procs[i].time_index;
-		event = procs[i].times[index];
-		printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
-		if( event != 0 && event <= time ) return i;
-	}
-	return -1;
+    int i, event, index;
+    for(i = 0; i < numProcs; i++){
+        index = procs[i].time_index;
+        event = procs[i].times[index];
+        printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
+        if( event != 0 && event <= time ) return i;
+    }
+    return -1;
 }
 
-// as above, but modified for the specific case of 
+// as above, but modified for the specific case of
 int get_initial_events(){
-	int i, event, index;
-	for(i = 0; i < numProcs; i++){
-		index = procs[i].time_index;
-		event = procs[i].times[index];
-		//printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
-		if( event == 0 ) return i;
-	}
-	return -1;
+    int i, event, index;
+    for(i = 0; i < numProcs; i++){
+        index = procs[i].time_index;
+        event = procs[i].times[index];
+        //printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
+        if( event == 0 ) return i;
+    }
+    return -1;
 }
 
 
@@ -427,11 +429,11 @@ void First(int time) {
     int next = get_next_event(time);
     // while there's an event to update,
     while(next != -1){
-		printf("Next = [%c]: %d (%d)\n", procs[next].p_name, procs[next].mem_size, procs[next].start_index);
+        printf("Next = [%c]: %d (%d)\n", procs[next].p_name, procs[next].mem_size, procs[next].start_index);
         // if it's in memory, the event is a take_process
         if (procs[next].start_index != -1){
             take_process(next);
-			next = get_next_event(time);
+            next = get_next_event(time);
         }// /take process
         // if the process is not in memory, the event is a put_process
         else if (procs[next].start_index == -1){
@@ -447,9 +449,9 @@ void First(int time) {
             // PUT PROCESS and update necessary fields
             if(k != -1){
                 put_process(next,k);
-				printf("put_process successful\n");
-				next = get_next_event(time);
-				printf("got next: %d\n", next);
+                printf("put_process successful\n");
+                next = get_next_event(time);
+                printf("got next: %d\n", next);
             }
             else {
                 int x=defrag();
@@ -457,8 +459,8 @@ void First(int time) {
                     perror("OUT OF MEMEORY");
                     exit(EXIT_FAILURE);
                 }
-				// If there is enough space after we defrag,
-				// don't incrememnt next yet, just run the loop again with the same next event
+            // If there is enough space after we defrag,
+            // don't incrememnt next yet, just run the loop again with the same next event
             }
         }// /put process
     }// /while
@@ -473,7 +475,7 @@ void Best(int time) {
         // if it's in memory, the event is a take_process
         if (procs[next].start_index > 0){
             take_process(next);
-			next = get_next_event(time);
+            next = get_next_event(time);
         }// /take process
         // if the process is not in memory, the event is a put_process
         else if (procs[next].start_index == -1){
@@ -490,7 +492,7 @@ void Best(int time) {
             // PUT PROCESS and update necessary fields
             if(k != -1){
                 put_process(next,k);
-				next = get_next_event(time);
+                next = get_next_event(time);
             }
             else {
                 int x=defrag();
@@ -498,8 +500,8 @@ void Best(int time) {
                     perror("OUT OF MEMEORY");
                     exit(EXIT_FAILURE);
                 }
-				// If there is enough space after we defrag,
-				// don't incrememnt next yet, just run the loop again with the same next event
+            // If there is enough space after we defrag,
+            // don't incrememnt next yet, just run the loop again with the same next event
             }
         }// /put process
     }// /while
@@ -515,7 +517,7 @@ void Next(int time) {
         // if it's in memory, the event is a take_process
         if (procs[next].start_index > 0){
             take_process(next);
-			next = get_next_event(time);
+            next = get_next_event(time);
         }// /take process
         // if the process is not in memory, the event is a put_process
         else if (procs[next].start_index == -1){
@@ -536,7 +538,7 @@ void Next(int time) {
             // PUT PROCESS and update necessary fields
             if(k != -1){
                 put_process(next,k);
-				next = get_next_event(time);
+                next = get_next_event(time);
             }
             else {
                 int x=defrag();
@@ -544,8 +546,8 @@ void Next(int time) {
                     perror("OUT OF MEMEORY");
                     exit(EXIT_FAILURE);
                 }
-				// If there is enough space after we defrag,
-				// don't incrememnt next yet, just run the loop again with the same next event
+                // If there is enough space after we defrag,
+                // don't incrememnt next yet, just run the loop again with the same next event
             }
         }// /put process
     }// /while
@@ -560,7 +562,7 @@ void Worst(int time) {
         // if it's in memory, the event is a take_process
         if (procs[next].start_index > 0){
             take_process(next);
-			next = get_next_event(time);
+            next = get_next_event(time);
         }// /take process
         // if the process is not in memory, the event is a put_process
         else if (procs[next].start_index == -1){
@@ -577,7 +579,7 @@ void Worst(int time) {
             // PUT PROCESS and update necessary fields
             if(k != -1){
                 put_process(next,k);
-				next = get_next_event(time);
+                next = get_next_event(time);
             }
             else {
                 int x=defrag();
@@ -585,8 +587,8 @@ void Worst(int time) {
                     perror("OUT OF MEMEORY");
                     exit(EXIT_FAILURE);
                 }
-				// If there is enough space after we defrag,
-				// don't incrememnt next yet, just run the loop again with the same next event
+                // If there is enough space after we defrag,
+                // don't incrememnt next yet, just run the loop again with the same next event
             }
         }// /put process
     }// /while
@@ -630,29 +632,29 @@ int main (int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     //int i, n, j;
-	// Initlaize processes
-	char * filename = argv[1];
-	FILE * input = fopen(filename, "r");
-	if (input==NULL) {
-		perror("open failed");
-		return EXIT_FAILURE;
-	}
-	procs = read_from_file(input);
-	printf("... Processes initialized\n");
-	/*for(i = 0; i < numProcs; i++){
-		n = sizeof(procs[i].times) / sizeof(int);
-		for(j = 0; j < n; j++)
-			printf("%c: times[%d] = %d\n", procs[i].p_name, j, procs[i].times[j]);
-	}*/
-	// Initialize free block(s)
-	init_free_blocks(); 
-	printf("... Free blocks initalized\n");
+    // Initlaize processes
+    char * filename = argv[1];
+    FILE * input = fopen(filename, "r");
+    if (input==NULL) {
+        perror("open failed");
+        return EXIT_FAILURE;
+    }
+    procs = read_from_file(input);
+    printf("... Processes initialized\n");
+    /*for(i = 0; i < numProcs; i++){
+    n = sizeof(procs[i].times) / sizeof(int);
+    for(j = 0; j < n; j++)
+    printf("%c: times[%d] = %d\n", procs[i].p_name, j, procs[i].times[j]);
+    }*/
+    // Initialize free block(s)
+    init_free_blocks();
+    printf("... Free blocks initalized\n");
 
-	/*for(i = 0; i < bc; i++){
-		printf("free blocks[%d]: %d, %d\n", i, list[i].start_index, list[i].size);
-	}*/
-	// Initialize memory representation
-	init_memory();
+    /*for(i = 0; i < bc; i++){
+    printf("free blocks[%d]: %d, %d\n", i, list[i].start_index, list[i].size);
+    }*/
+    // Initialize memory representation
+    init_memory();
     // Get method:
     char method[8];
     strcpy(method, argv[2]);
@@ -664,72 +666,72 @@ int main (int argc, char* argv[]) {
     }
     printf("Method acquired\n");
     printmemory();
-	// Do the thing:
-	int t_input;
-	if( (strcasecmp(method, "first") == 0) ){
-		while(1){
-			printf("[FIRST:] Enter next time, or 0 to quit:\n");
-			scanf("%d", &t_input);
-			if( t_input == 0 )
-				break;
-			if( t_input < time_counter ){
-				printf("Ascending times only, please\n");
-				continue;
-			}
-			time_counter = t_input;
-			First(time_counter);
-			printmemory();
-		}
-	}
-	else if( (strcasecmp(method, "next") == 0) ){
-		while(1){
-			printf("[NEXT:] Enter next time, or 0 to quit:\n");
-			scanf("%d", &t_input);
-			if( t_input == 0 )
-				break;
-			if( t_input < time_counter ){
-				printf("Ascending times only, please\n");
-				continue;
-			}
-			time_counter = t_input;
-			Next(time_counter);
-			printmemory();
-		}
-	}
-	else if( (strcasecmp(method, "best") == 0) ){
-		while(1){
-			printf("[BEST:] Enter next time, or 0 to quit:\n");
-			scanf("%d", &t_input);
-			if( t_input == 0 )
-				break;
-			if( t_input < time_counter ){
-				printf("Ascending times only, please\n");
-				continue;
-			}
-			time_counter = t_input;
-			Best(time_counter);
-			printmemory();
-		}
-	}
-	else if( (strcasecmp(method, "worst") == 0) ){
-		while(1){
-			printf("[WORST:] Enter next time, or 0 to quit:\n");
-			scanf("%d", &t_input);
-			if( t_input == 0 )
-				break;
-			if( t_input < time_counter ){
-				printf("Ascending times only, please\n");
-				continue;
-			}
-			time_counter = t_input;
-			Worst(time_counter);
-			printmemory();
-		}
-	}
-	else{
-		perror("Error: Invalid method! Options: first, next, best, worst\n");
-		return EXIT_FAILURE;
-	}
+    // Do the thing:
+    int t_input;
+    if( (strcasecmp(method, "first") == 0) ){
+        while(1){
+            printf("[FIRST:] Enter next time, or 0 to quit:\n");
+            scanf("%d", &t_input);
+            if( t_input == 0 )
+                break;
+            if( t_input < time_counter ){
+                printf("Ascending times only, please\n");
+                continue;
+            }
+            time_counter = t_input;
+            First(time_counter);
+            printmemory();
+        }
+    }
+    else if( (strcasecmp(method, "next") == 0) ){
+        while(1){
+            printf("[NEXT:] Enter next time, or 0 to quit:\n");
+            scanf("%d", &t_input);
+            if( t_input == 0 )
+                break;
+            if( t_input < time_counter ){
+                printf("Ascending times only, please\n");
+                continue;
+            }
+            time_counter = t_input;
+            Next(time_counter);
+            printmemory();
+        }
+    }
+    else if( (strcasecmp(method, "best") == 0) ){
+        while(1){
+            printf("[BEST:] Enter next time, or 0 to quit:\n");
+            scanf("%d", &t_input);
+            if( t_input == 0 )
+                break;
+            if( t_input < time_counter ){
+                printf("Ascending times only, please\n");
+                continue;
+            }
+            time_counter = t_input;
+            Best(time_counter);
+            printmemory();
+        }
+    }
+    else if( (strcasecmp(method, "worst") == 0) ){
+        while(1){
+            printf("[WORST:] Enter next time, or 0 to quit:\n");
+            scanf("%d", &t_input);
+            if( t_input == 0 )
+                break;
+            if( t_input < time_counter ){
+                printf("Ascending times only, please\n");
+                continue;
+            }
+            time_counter = t_input;
+            Worst(time_counter);
+            printmemory();
+        }
+    }
+    else{
+        perror("Error: Invalid method! Options: first, next, best, worst\n");
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
