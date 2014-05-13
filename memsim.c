@@ -58,6 +58,7 @@ int time_counter = 0; // simulation time
 // procedure/free block methods:
 int index_sort(const void *a,const void *b);
 void init_free_blocks();
+void reset_free_blocks(int start, int b_size);
 void take_process(int pindex);
 void merge_blocks();
 void put_process(int pindex, int bindex);
@@ -91,6 +92,15 @@ void init_free_blocks(){
 	list = (struct free_block*)(malloc(sizeof(struct free_block)));
 	list->start_index = OS_SIZE;
 	list->size = (MEM_SIZE - OS_SIZE);
+	bc = 1;
+}
+
+// Utility function for resetting free_blocks after defrag
+// Basically init, with arguments for the start and size following defrag
+void reset_free_blocks(int start, int b_size){
+	list = (struct free_block*)(malloc(sizeof(struct free_block)));
+	list->start_index = start;
+	list->size = b_size;
 	bc = 1;
 }
 
@@ -274,7 +284,7 @@ void write_procedure(struct procedure * p){
 	int span = (p->start_index + p->mem_size);
 	for(i = p->start_index; i < span; i++){
 		if(memory[i] != '.'){
-			perror("Invalid memory write location!\n");
+			//perror("Invalid memory write location!\n");
 		}
 		memory[i] = p->p_name;
 	}
@@ -369,9 +379,11 @@ int defrag() {
             }
             if (mark==0) {
                 free(list);
-                init_free_blocks();
-                list->start_index=i;
-                printf("Defragmentation complete. \nRelocated %i processes to create a free memory block of %i units (%f%% of total memory).\n",count, 1600-i, (float)(1600-i)/1600.0);
+				reset_free_blocks(i, (1600-i));
+                printf("Defragmentation complete. \nRelocated %i processes to create a free memory block of %i units (%f%% of total memory).\n",count, 1600-i, (float)(1600-i)/16.0);
+				for(i = 0; i < bc; i++){
+					printf("[Block %d] start: %d, size: %d\n", i, list[i].start_index, list[i].size);
+				}
                 return 1600-i;
             }
         }
@@ -388,7 +400,7 @@ int get_next_event(int time){
 	for(i = 0; i < numProcs; i++){
 		index = procs[i].time_index;
 		event = procs[i].times[index];
-		//printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
+		printf("Process[%d]'s next event: #%d, %d\n", i, index, event);
 		if( event != 0 && event <= time ) return i;
 	}
 	return -1;
@@ -413,10 +425,9 @@ Placement Methods
 void First(int time) {
     int j = 0;
     int next = get_next_event(time);
-    printf("Next process: %d, %c\n", next, procs[next].p_name);
     // while there's an event to update,
     while(next != -1){
-        printf("Next process: %d, %c\n", next, procs[next].p_name);
+		printf("Next = [%c]: %d (%d)\n", procs[next].p_name, procs[next].mem_size, procs[next].start_index);
         // if it's in memory, the event is a take_process
         if (procs[next].start_index != -1){
             take_process(next);
@@ -436,7 +447,9 @@ void First(int time) {
             // PUT PROCESS and update necessary fields
             if(k != -1){
                 put_process(next,k);
+				printf("put_process successful\n");
 				next = get_next_event(time);
+				printf("got next: %d\n", next);
             }
             else {
                 int x=defrag();
@@ -448,7 +461,6 @@ void First(int time) {
 				// don't incrememnt next yet, just run the loop again with the same next event
             }
         }// /put process
-        next = get_next_event(time);
     }// /while
     return;
 }// /First
@@ -456,7 +468,6 @@ void First(int time) {
 void Best(int time) {
     int j = 0;
     int next = get_next_event(time);
-    printf("Next process: %d, %c\n", next, procs[next].p_name);
     // while there's an event to update,
     while(next != -1){
         // if it's in memory, the event is a take_process
@@ -499,7 +510,6 @@ void Next(int time) {
     int j = 0;
     int prev_k = 0;
     int next = get_next_event(time);
-    printf("Next process: %d, %c\n", next, procs[next].p_name);
     // while there's an event to update,
     while(next != -1){
         // if it's in memory, the event is a take_process
@@ -545,7 +555,6 @@ void Next(int time) {
 void Worst(int time) {
     int j=0;
     int next = get_next_event(time);
-    printf("Next process: %d, %c\n", next, procs[next].p_name);
     // while there's an event to update,
     while(next != -1){
         // if it's in memory, the event is a take_process
