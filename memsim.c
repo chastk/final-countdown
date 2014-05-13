@@ -411,145 +411,181 @@ Placement Methods
 *******************************/
 void First(int time) {
     int j = 0;
-	int next = get_next_event(time);
-	printf("Next process: %d, %c\n", next, procs[next].p_name);
-	// while there's an event to update,
-	while(next != -1){
-		printf("Next process: %d, %c\n", next, procs[next].p_name);
-		// if it's in memory, the event is a take_process
-		if (procs[next].start_index != -1){
-			take_process(next);
-		}// /take process
-		// if the process is not in memory, the event is a put_process
-		else if (procs[next].start_index == -1){
-			// find the FIRST block large enough to hold procs[next]
-			int k = -1;
-			for(j = 0; j < bc; j++){
-				if( list[j].size >= procs[next].mem_size ){
-					k = j;
-					break;
-				}
-			}
-			// if we found an apprpriate block,
-			// PUT PROCESS and update necessary fields
-			if(k != -1){
-				procs[next].start_index = list[k].start_index;
-				put_process(next,k);
-				printf("Placed a process at %d\n", procs[next].start_index);
-			}
-			else defrag();
-		}// /put process
-		next = get_next_event(time);
-	}// /while
+    int next = get_next_event(time);
+    printf("Next process: %d, %c\n", next, procs[next].p_name);
+    // while there's an event to update,
+    while(next != -1){
+        printf("Next process: %d, %c\n", next, procs[next].p_name);
+        // if it's in memory, the event is a take_process
+        if (procs[next].start_index != -1){
+            take_process(next);
+        }// /take process
+        // if the process is not in memory, the event is a put_process
+        else if (procs[next].start_index == -1){
+            // find the FIRST block large enough to hold procs[next]
+            int k = -1;
+            for(j = 0; j < bc; j++){
+                if( list[j].size >= procs[next].mem_size ){
+                    k = j;
+                    break;
+                }
+            }
+            // if we found an apprpriate block,
+            // PUT PROCESS and update necessary fields
+            if(k != -1){
+                procs[next].start_index = list[k].start_index;
+                put_process(next,k);
+                printf("Placed a process at %d\n", procs[next].start_index);
+            }
+            else {
+                int x=defrag();
+                if (x<procs[next].mem_size) {
+                    perror("OUT OF MEMEORY");
+                    exit(EXIT_FAILURE);
+                }
+                else {
+                    /*Katie, is there a way to use your functions to run through this process again?*/
+                }
+            }
+        }// /put process
+        next = get_next_event(time);
+    }// /while
     return;
 }// /First
 
 void Best(int time) {
     int j = 0;
-	int next = get_next_event(time);
-	printf("Next process: %d, %c\n", next, procs[next].p_name);
-	// while there's an event to update,
-	while(next != -1){
-		// if it's in memory, the event is a take_process
-		if (procs[next].start_index > 0){
-			take_process(next);
-		}// /take process
-		// if the process is not in memory, the event is a put_process
-		else if (procs[next].start_index == -1){
-			// find the SMALLEST block large enough to hold procs[next]
-		    int smallest = MEM_SIZE - OS_SIZE;
-		    int k = -1;
-			for(j = 0; j < bc; j++){
-				if( (list[j].size >= procs[next].mem_size) && (list[j].size < smallest) ){
-					smallest = list[j].size;
-					k = j;
+    int next = get_next_event(time);
+    printf("Next process: %d, %c\n", next, procs[next].p_name);
+    // while there's an event to update,
+    while(next != -1){
+        // if it's in memory, the event is a take_process
+        if (procs[next].start_index > 0){
+            take_process(next);
+        }// /take process
+        // if the process is not in memory, the event is a put_process
+        else if (procs[next].start_index == -1){
+            // find the SMALLEST block large enough to hold procs[next]
+            int smallest = MEM_SIZE - OS_SIZE;
+            int k = -1;
+            for(j = 0; j < bc; j++){
+                if( (list[j].size >= procs[next].mem_size) && (list[j].size < smallest) ){
+                    smallest = list[j].size;
+                    k = j;
                 }
-			}
-			// if we find an appropriate block, 
-			//	PUT PROCESS and update necessary fields
-			if(k != -1){
-				procs[next].start_index = list[k].start_index;
-				put_process(next,k);
-			}
-			else defrag();
-		}// /put process
-		next = get_next_event(time);
-	}// /while
+            }
+            // if we find an appropriate block,
+            // PUT PROCESS and update necessary fields
+            if(k != -1){
+                procs[next].start_index = list[k].start_index;
+                put_process(next,k);
+            }
+            else {
+                int x=defrag();
+                if (x<procs[next].mem_size) {
+                    perror("OUT OF MEMEORY");
+                    exit(EXIT_FAILURE);
+                }
+                else {
+                    /*Katie, is there a way to use your functions to run through this process again?*/
+                }
+            }
+        }// /put process
+        next = get_next_event(time);
+    }// /while
     return;
 }// /Best
 
 void Next(int time) {
     int j = 0;
-	int prev_k = 0;
-	int next = get_next_event(time);
-	printf("Next process: %d, %c\n", next, procs[next].p_name);
-	// while there's an event to update,
-	while(next != -1){
-		// if it's in memory, the event is a take_process
-		if (procs[next].start_index > 0){
-			take_process(next);
-		}// /take process
-		// if the process is not in memory, the event is a put_process
-		else if (procs[next].start_index == -1){
-			// find the NEXT block large enough to hold procs[next]
-			int k = -1;
-			// start looking where we placed the last one
-			for(j = prev_k; j < bc; j++){
-				if(list[j].size > procs[next].mem_size) k = j;
-			}
-			// if we haven't found it in the second half of the array,
-			//	loop around and check the first half....
-			if(k < 0){
-				for(j = 0; j < prev_k; j++){
-					if(list[j].size > procs[next].mem_size) k = j;
-				}
-			}
-			// if we find an appropriate block, 
-			//	PUT PROCESS and update necessary fields
-			if(k != -1){
-				procs[next].start_index = list[k].start_index;
-				put_process(next,k);
-			}
-			else defrag();
-		}// /put process
-		next = get_next_event(time);
-	}// /while
+    int prev_k = 0;
+    int next = get_next_event(time);
+    printf("Next process: %d, %c\n", next, procs[next].p_name);
+    // while there's an event to update,
+    while(next != -1){
+        // if it's in memory, the event is a take_process
+        if (procs[next].start_index > 0){
+            take_process(next);
+        }// /take process
+        // if the process is not in memory, the event is a put_process
+        else if (procs[next].start_index == -1){
+            // find the NEXT block large enough to hold procs[next]
+            int k = -1;
+            // start looking where we placed the last one
+            for(j = prev_k; j < bc; j++){
+                if(list[j].size > procs[next].mem_size) k = j;
+            }
+            // if we haven't found it in the second half of the array,
+            // loop around and check the first half....
+            if(k < 0){
+                for(j = 0; j < prev_k; j++){
+                    if(list[j].size > procs[next].mem_size) k = j;
+                }
+            }
+            // if we find an appropriate block,
+            // PUT PROCESS and update necessary fields
+            if(k != -1){
+                procs[next].start_index = list[k].start_index;
+                put_process(next,k);
+            }
+            else {
+                int x=defrag();
+                if (x<procs[next].mem_size) {
+                    perror("OUT OF MEMEORY");
+                    exit(EXIT_FAILURE);
+                }
+                else {
+                    /*Katie, is there a way to use your functions to run through this process again?*/
+                }
+            }
+        }// /put process
+        next = get_next_event(time);
+    }// /while
     return;
 }// /Next
 
 void Worst(int time) {
     int j=0;
-	int next = get_next_event(time);
-	printf("Next process: %d, %c\n", next, procs[next].p_name);
-	// while there's an event to update,
-	while(next != -1){
-		// if it's in memory, the event is a take_process
-		if (procs[next].start_index > 0){
-			take_process(next);
-			// and update the start index to reflect that the process is out of memory
-			procs[next].start_index = -1;
-		}// /take process
-		// if the process is not in memory, the event is a put_process
-		else if (procs[next].start_index == -1){
-			// find the SMALLEST block large enough to hold procs[next]
-		    int largest = 0;
-		    int k = -1;
-			for(j = 0; j < bc; j++){
-				if( (list[j].size >= procs[next].mem_size) && (list[j].size > largest) ){
-					largest = list[j].size;
-					k = j;
+    int next = get_next_event(time);
+    printf("Next process: %d, %c\n", next, procs[next].p_name);
+    // while there's an event to update,
+    while(next != -1){
+        // if it's in memory, the event is a take_process
+        if (procs[next].start_index > 0){
+            take_process(next);
+            // and update the start index to reflect that the process is out of memory
+            procs[next].start_index = -1;
+        }// /take process
+        // if the process is not in memory, the event is a put_process
+        else if (procs[next].start_index == -1){
+            // find the SMALLEST block large enough to hold procs[next]
+            int largest = 0;
+            int k = -1;
+            for(j = 0; j < bc; j++){
+                if( (list[j].size >= procs[next].mem_size) && (list[j].size > largest) ){
+                    largest = list[j].size;
+                    k = j;
                 }
-			}
-			// if we find an appropriate block, 
-			//	PUT PROCESS and update necessary fields
-			if(k != -1){
-				procs[next].start_index = list[k].start_index;
-				put_process(next,k);
-			}
-			else defrag();
-		}// /put process
-		next = get_next_event(time);
-	}// /while
+            }
+            // if we find an appropriate block,
+            // PUT PROCESS and update necessary fields
+            if(k != -1){
+                procs[next].start_index = list[k].start_index;
+                put_process(next,k);
+            }
+            else {
+                int x=defrag();
+                if (x<procs[next].mem_size) {
+                    perror("OUT OF MEMEORY");
+                    exit(EXIT_FAILURE);
+                }
+                else {
+                    /*Katie, is there a way to use your functions to run through this process again?*/
+                }
+            }
+        }// /put process
+        next = get_next_event(time);
+    }// /while
     return;
 }// /Worst
 
